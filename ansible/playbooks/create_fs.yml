@@ -1,0 +1,10 @@
+# ansible/playbooks/create_fs.yml
+---
+- name: Create Oracle Agent Filesystem
+  hosts: oci_instances
+  become: true
+  vars_files:
+    - "{{ fs_config_path | default('../vars/fs_config.yml') }}"
+  
+  roles:
+    - oracle_agent_fs

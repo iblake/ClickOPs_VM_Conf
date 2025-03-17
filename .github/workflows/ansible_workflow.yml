@@ -1,0 +1,80 @@
+name: Deploy Oracle Agent Filesystem
+
+on:
+  pull_request:
+    paths:
+      - 'config/fs_config.yml'
+      - 'ansible/**'
+    types: [opened, synchronize, reopened, closed]
+    branches: [main]
+
+jobs:
+  validate-config:
+    runs-on: ubuntu-latest
+    if: github.event.action != 'closed' || github.event.pull_request.merged == true
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        
+      - name: Install yq
+        run: |
+          sudo wget -O /usr/local/bin/yq https://github.com/mikefarah/yq/releases/download/v4.25.1/yq_linux_amd64
+          sudo chmod +x /usr/local/bin/yq
+          
+      - name: Validate config file
+        run: |
+          # Validate that required fields are present
+          if [ ! -f config/fs_config.yml ]; then
+            echo "Error: config/fs_config.yml file is missing"
+            exit 1
+          fi
+          
+          # Check for required fields
+          FS_SIZE=$(yq '.oracle_agent_fs_size' config/fs_config.yml)
+          if [ "$FS_SIZE" == "null" ]; then
+            echo "Error: oracle_agent_fs_size is required in config/fs_config.yml"
+            exit 1
+          fi
+          
+          # Validate filesystem size format (e.g., 10g, 500m)
+          if ! [[ "$FS_SIZE" =~ ^[0-9]+[gGmM]$ ]]; then
+            echo "Error: Invalid filesystem size format. Use format like '10g' or '500m'"
+            exit 1
+          fi
+          
+          echo "Config validation passed"
+  
+  deploy:
+    needs: validate-config
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          
+      - name: Install Ansible
+        run: |
+          python -m pip install --upgrade pip
+          pip install ansible oci-ansible-modules
+          
+      - name: Install OCI Python SDK
+        run: pip install oci
+        
+      - name: Configure OCI credentials
+        run: |
+          mkdir -p ~/.oci
+          echo "${{ secrets.OCI_CONFIG }}" > ~/.oci/config
+          echo "${{ secrets.OCI_PRIVATE_KEY }}" > ~/.oci/private_key.pem
+          chmod 600 ~/.oci/private_key.pem
+          
+      - name: Run Ansible Playbook
+        run: |
+          ansible-playbook \
+            -i ansible/inventory/hosts.yml \
+            -e fs_config_path=config/fs_config.yml \
+            ansible/playbooks/create_fs.yml

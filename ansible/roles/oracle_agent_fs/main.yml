@@ -1,0 +1,41 @@
+# ansible/roles/oracle_agent_fs/tasks/main.yml
+---
+- name: Ensure directory exists
+  file:
+    path: /opt/oracle
+    state: directory
+    mode: '0755'
+    
+- name: Create logical volume for Oracle Agent
+  lvol:
+    vg: "{{ oracle_agent_vg }}"
+    lv: "{{ oracle_agent_lv }}"
+    size: "{{ oracle_agent_fs_size }}"
+    state: present
+  register: lv_result
+
+- name: Create filesystem on logical volume
+  filesystem:
+    fstype: "{{ oracle_agent_fs_type }}"
+    dev: "/dev/mapper/{{ oracle_agent_vg }}-{{ oracle_agent_lv }}"
+    
+- name: Ensure mount directory exists
+  file:
+    path: /opt/oracle/agent
+    state: directory
+    mode: '0755'
+    
+- name: Mount filesystem
+  mount:
+    path: /opt/oracle/agent
+    src: "/dev/mapper/{{ oracle_agent_vg }}-{{ oracle_agent_lv }}"
+    fstype: "{{ oracle_agent_fs_type }}"
+    state: mounted
+    
+- name: Set proper permissions
+  file:
+    path: /opt/oracle/agent
+    state: directory
+    owner: "{{ oracle_agent_user }}"
+    group: "{{ oracle_agent_group }}"
+    mode: '0755'

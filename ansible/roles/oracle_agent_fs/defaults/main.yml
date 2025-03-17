@@ -1,0 +1,8 @@
+# ansible/roles/oracle_agent_fs/defaults/main.yml
+---
+oracle_agent_vg: "vg_data"
+oracle_agent_lv: "lv_oracle_agent"
+oracle_agent_fs_size: "10g"
+oracle_agent_fs_type: "xfs"
+oracle_agent_user: "oracle"
+oracle_agent_group: "oinstall"
