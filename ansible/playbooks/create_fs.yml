@@ -4,7 +4,7 @@
   hosts: oci_instances
   become: true
   vars_files:
-    - "{{ fs_config_path | default('../vars/fs_config.yml') }}"
+    - "{{ fs_config_path | default('../fs_config.yml') }}"
   
   roles:
     - oracle_agent_fs
