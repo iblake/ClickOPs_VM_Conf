@@ -1,6 +1,6 @@
 # config/fs_config.yml
 ---
-oracle_agent_fs_size: "2g"  # Los usuarios cambiarán este valor en sus pull requests
+oracle_agent_fs_size: "3g"  # Los usuarios cambiarán este valor en sus pull requests
 oracle_agent_fs_type: "xfs"
 oracle_agent_vg: "vg_data"
 oracle_agent_lv: "lv_oracle_agent"
