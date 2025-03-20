@@ -1,0 +1,43 @@
+---
+- name: Create a filesystem for Oracle Agent
+  hosts: oracle_servers
+  become: yes
+  tasks:
+    - name: Create parent directories if they don't exist
+      file:
+        path: /opt/oracle
+        state: directory
+        mode: '0755'
+        owner: root
+        group: root
+
+    - name: Create a 2GB file to use as a disk image
+      command: dd if=/dev/zero of=/opt/oracle_agent.img bs=1M count=2048
+      args:
+        creates: /opt/oracle_agent.img
+
+    - name: Create an ext4 filesystem on the disk image
+      filesystem:
+        fstype: ext4
+        dev: /opt/oracle_agent.img
+
+    - name: Ensure mount point exists
+      file:
+        path: /opt/oracle/agent
+        state: directory
+        mode: '0755'
+        owner: root
+        group: root
+
+    - name: Add entry to fstab for persistent mounting
+      lineinfile:
+        path: /etc/fstab
+        line: "/opt/oracle_agent.img /opt/oracle/agent ext4 defaults,noatime 0 0"
+        state: present
+
+    - name: Mount the filesystem
+      mount:
+        path: /opt/oracle/agent
+        src: /opt/oracle_agent.img
+        fstype: ext4
+        state: mounted

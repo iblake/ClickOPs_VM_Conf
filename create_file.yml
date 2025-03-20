@@ -1,0 +1,17 @@
+---
+- name: Create file '/tmp/works' if it doesn't exist
+  hosts: all
+  gather_facts: no
+
+  tasks:
+    - name: Check if file exists
+      stat:
+        path: /tmp/works
+      register: file_check
+
+    - name: Create file in /tmp if it doesn't exist
+      file:
+        path: /tmp/works
+        state: touch
+        mode: '0644'
+      when: not file_check.stat.exists

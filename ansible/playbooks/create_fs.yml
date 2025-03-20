@@ -2,7 +2,7 @@
 ---
 - name: Create Oracle Agent Filesystem
   hosts: oci_instances
-  become: true
+  become: yes
   vars_files:
     - "{{ fs_config_path | default('../fs_config.yml') }}"
   
